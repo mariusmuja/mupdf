@@ -1067,13 +1067,29 @@ void pdfapp_onkey(pdfapp_t *app, int c)
 		break;
 
 	case 'j':
-		app->pany -= fz_pixmap_height(app->ctx, app->image) / 10;
+		{
+		int image_h = fz_pixmap_height(app->ctx, app->image);
+		if (app->pany + image_h <= app->winh || app->winh >= image_h) {
+			panto = PAN_TO_TOP;
+			app->pageno++;
+			break;
+		}
+		app->pany -= image_h / 10;
 		pdfapp_showpage(app, 0, 0, 1, 0);
+		}
 		break;
 
 	case 'k':
-		app->pany += fz_pixmap_height(app->ctx, app->image) / 10;
-		pdfapp_showpage(app, 0, 0, 1, 0);
+		{
+		int image_h = fz_pixmap_height(app->ctx, app->image);
+		if (app->pany == 0 || app->winh >= image_h) {
+			panto = PAN_TO_BOTTOM;
+			app->pageno--;
+			break;
+		}
+		app->pany += image_h / 10;
+ 		pdfapp_showpage(app, 0, 0, 1, 0);
+		}
 		break;
 
 	case 'l':
@@ -1417,7 +1433,7 @@ void pdfapp_onmouse(pdfapp_t *app, int x, int y, int btn, int modifiers, int sta
 			app->selr.y0 = y;
 			app->selr.y1 = y;
 		}
-		if (btn == 4 || btn == 5) /* scroll wheel */
+		if (btn == 4 || btn == 5 ) /* scroll wheel */
 		{
 			int dir = btn == 4 ? 1 : -1;
 			app->ispanning = app->iscopying = 0;
@@ -1441,9 +1457,25 @@ void pdfapp_onmouse(pdfapp_t *app, int x, int y, int btn, int modifiers, int sta
 				int isx = (modifiers & (1<<0));
 				int xstep = isx ? 20 * dir : 0;
 				int ystep = !isx ? 20 * dir : 0;
-				pdfapp_panview(app, app->panx + xstep, app->pany + ystep);
+				int image_h = fz_pixmap_height(app->ctx, app->image);
+				if (ystep > 0 && app->pageno > 1 && (app->pany == 0 || app->winh >= image_h)) {
+					app->pany = -2000;
+					app->pageno--;
+					pdfapp_showpage(app, 1, 1, 1, 0);
+				} else if (ystep < 0 && app->pageno < app->pagecount &&
+						(app->pany + ystep + image_h <= app->winh || app->winh >= image_h)) {
+					app->pany = 0;
+					app->pageno++;
+					pdfapp_showpage(app, 1, 1, 1, 0);
+				} else pdfapp_panview(app, app->panx + xstep, app->pany + ystep);
 			}
 		}
+        if (btn == 6 || btn == 7) 
+        {
+			int dir = btn == 6 ? 1 : -1;
+            int xstep = 20 * dir;
+		    pdfapp_panview(app, app->panx + xstep, app->pany);
+        }
 	}
 
 	else if (state == -1)
