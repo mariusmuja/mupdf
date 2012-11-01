@@ -51,7 +51,9 @@ fz_load_jpx(fz_context *ctx, unsigned char *data, int size, fz_colorspace *defcs
 
 	opj_set_default_decoder_parameters(&params);
 	if (indexed)
+#ifdef OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG
 		params.flags |= OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG;
+#endif
 
 	info = opj_create_decompress(format);
 	opj_set_event_mgr((opj_common_ptr)info, &evtmgr, ctx);
