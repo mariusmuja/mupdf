@@ -9,7 +9,7 @@
  * uses a number of callbacks to the GUI app.
  */
 
-#define MINRES 54
+#define MINRES 27
 #define MAXRES 300
 
 typedef struct pdfapp_s pdfapp_t;
